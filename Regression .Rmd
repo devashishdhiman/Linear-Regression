@@ -1,0 +1,106 @@
+---
+title: "Linear Regression"
+output: pdf_document
+---
+
+### Uploading Dataset
+
+```{r}
+data <- read.csv("HousePrices.csv");str(data)
+View(data)
+```
+
+### Partitioning Dataset
+
+```{r}
+require(caTools)
+set.seed(101) 
+
+sample = sample.split(data$Price, SplitRatio = .75)
+
+train = subset(data, sample == TRUE)
+test  = subset(data, sample == FALSE)
+
+str(train)
+#train <- scale(train)
+#train <- as.data.frame(train)
+```
+
+
+### Vizualisation
+Sactter Plots
+BoxPlot
+```{r}
+plot(train)
+boxplot(train)
+```
+
+## Simple Linear Regression
+
+```{r}
+lm1 <- lm(Price ~ Living.Area, data = train)
+summary(lm1)
+
+```
+
+### Multiple Linear Regression
+```{r}
+lm2 <- lm(Price~.,data=train)
+summary(lm2)
+plot(lm2)
+```
+
+### Models Selection
+##### Variables selection
+
+```{r}
+library(leaps)
+
+search <- regsubsets(Price~.,data = train)
+sum <- summary(search)
+
+# Show models
+sum$which
+
+# Show metrics
+sum$rsq
+sum$adjr2
+sum$cp
+```
+
+### Stepwise Regression
+
+```{r}
+lm.step <- step(lm2, direction = "both");summary(lm.step)
+```
+
+### Pridiction Accuracy
+
+```{r}
+lm.step.pred <- predict(lm.step,test)
+#accuracy(lm.step.pred, test$Price)
+```
+
+### Ridge Regression
+
+```{r}
+library(glmnet)
+
+x <- as.matrix(train[,2:7])
+y <- as.matrix(train[,1])
+x.test <- as.matrix(test[,2:7])
+y.test <- as.matrix(test[,1])
+
+# fit model
+fit <- glmnet(x, y, family="gaussian", alpha=0, lambda=0.001)
+
+# summarize the fit
+summary(fit)
+
+# make predictions
+ridge.pred <- predict(fit, x.test, type="link")
+
+# summarize accuracy
+#rmse(ridge.pred,y.test)
+```
+
